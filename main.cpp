@@ -19,13 +19,23 @@ void listNotes(){
 	}
 }
 
-void decrypt(string password){
-
-}
-
-void encrypt(string password){
+bool encrypt_decrypt(string password){
 	//hashes password and saves it to src/pass
-	ofstream data_file(".data"); 
+	//read from data and get the current encrypted flag 
+	bool encrypted = false; 
+	ifstream data_file("./.data"); 
+	string data_line; 
+	/* 
+	HASH=...
+	ENCRYPTED=true|false
+	*/
+	while(getline(data_file, data_line)){
+
+		if(data_line.substr(0, data_line.find("=")) == "ENCRYPTED" && data_line.substr(data_line.find("=")+1, data_line.length() - 1) == "1"){
+			encrypted = true; 
+		}
+	}
+	data_file.close(); 
 	//hash password 
 	string hash = hashPass(password); 
 
@@ -58,14 +68,22 @@ void encrypt(string password){
 			ofstream re_save(file.relative_path()); 
 			re_save << encr_str; 
 			re_save.close(); 
+			if(!encrypted){
+				cout << "File " << file.filename() << " encrypted." <<endl; 
+			}else{
+				cout << "File " << file.filename() << " decrypted." <<endl; 
+			}
 
 		}
 	}
 
 	//write to .data 
-	data_file << "HASH=" << hash << endl; 
-	data_file << "ENCRYPTED=true"; 
-	data_file.close(); 
+	ofstream new_data_file("./.data"); 
+	new_data_file << "HASH=" << hash << endl; 
+	//flip the encrypted flag 
+	new_data_file << "ENCRYPTED=" << !encrypted; 
+	new_data_file.close(); 
+	return !encrypted; 
 
 
 }
@@ -98,7 +116,32 @@ void mainMenu(){
 	// cout << user_pass; 
 	cout<< "Your notes:" << endl; 
 	listNotes(); 
-	encrypt("Goodgod"); 
+	while(true){
+		string option; 
+		cout << "Options: [l] list notes  [e] encrypt/decrypt notes  [q] quit" <<endl ; 
+		cin >> option; 
+		if(option == "l"){
+			cout<< "Your notes:" << endl; 
+			listNotes();
+		}; 
+		if(option == "e"){
+			string pass; 
+			cout << "Password: "; 
+			cin >> pass; 
+			bool encrypted = encrypt_decrypt(pass); 
+			cout << "Files were "; 
+			if(encrypted){
+				cout << "encrypted"; 
+			}else{
+				cout << "decrypted";
+			}
+			cout << endl; 
+
+		}
+		if(option == "q"){
+			break; 
+		}
+	}
 
 }
 
